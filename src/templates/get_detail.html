@@ -1,0 +1,14 @@
+<script>
+    $(document).ready(()=>{
+        $('#confirm').click(()=>location.pathname=`/get/<%= code %>/<%= detail.downname %>`);
+    });
+</script>
+
+<p>收件码：<%= code %></p>
+<p>文件名：<%= detail.n %></p>
+<p>剩余下载次数：<%= detail.t %></p>
+<p>是否需要密码：<%= detail.p?"是":"否" %></p>
+<p>上传者 Ip：<%= detail.u %></p>
+<p>
+    <button id="confirm" class="topan-button-emphasize topan-button-default">确认</button>
+</p>

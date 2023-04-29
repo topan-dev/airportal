@@ -1,0 +1,79 @@
+<script>
+    $(document).ready(()=>{
+        $('#time').val(10);
+        $('#duration').val(48);
+        $('#password').val('');
+        var updateFileSize=()=>{
+            if(!$("#file").val())return;
+            var uploadfile=$("#file")[0].files[0];
+            var size=uploadfile.size/1024/1024;
+            size=parseInt(size*100)/100;
+            $('#file-size').text(`文件大小：${size} MiB`);
+        };
+        updateFileSize();
+        $("#file").change(updateFileSize);
+        $("#confirm").click(()=>{
+            if(!$("#file").val()){
+                $("#error").text('请选择文件。');
+                return;
+            }
+            var uploadfile=$("#file")[0].files[0];
+            if(uploadfile.size>=256*1024*1024){
+                $("#error").text('文件大小不得超过 256 MiB。');
+                return;
+            }
+            var formdata=new FormData();
+            formdata.append("file",uploadfile);
+            formdata.append("time",$('#time').val());
+            formdata.append("duration",$('#duration').val());
+            formdata.append("password",$('#password').val());
+            $.ajax({
+                url: "/send",
+                type: 'POST',
+                data: formdata,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: data=>{
+                    if(data.code)$('#success').text(`文件上传成功，收件码：${data.code}`);
+                    else $('#error').text(data.error);
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    input[type="text"]{
+        width: 100px !important;
+    }
+    input[type="password"]{
+        width: 200px !important;
+    }
+    #error{
+        color: red;
+    }
+    #success{
+        color: green;
+    }
+</style>
+
+<p>当前 Ip：<%= ip %></p>
+<p id="file-size"></p>
+<p>
+    下载次数：
+    <input id="time" type="text">
+    &nbsp;&nbsp;&nbsp;生效时间（小时）：
+    <input id="duration" type="text">
+</p>
+<p>
+    密码（不设置密码请留空）：
+    <input id="password" type="password">
+</p>
+<p>
+    选择文件：
+    <input id="file" type="file">
+    <button id="confirm" class="topan-button-emphasize topan-button-default">确认</button>
+</p>
+<p id="error"></p>
+<p id="success"></p>

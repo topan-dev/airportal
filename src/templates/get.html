@@ -1,0 +1,16 @@
+<script>
+    $(document).ready(()=>{
+        $('#confirm').click(()=>location.pathname=`/get/${$('#code').val()}/detail`);
+    });
+</script>
+
+<style>
+    input{
+        width: 200px !important;
+    }
+</style>
+
+<p>
+    <input id="code" type="text">
+    <button id="confirm" class="topan-button-emphasize topan-button-default">确认</button>
+</p>
