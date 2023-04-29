@@ -1,6 +1,6 @@
 <script>
     $(document).ready(()=>{
-        $('#time').val(10);
+        $('#time').val(3);
         $('#duration').val(48);
         $('#password').val('');
         var updateFileSize=()=>{
@@ -38,9 +38,14 @@
                 contentType: false,
                 processData: false,
                 success: data=>{
-                    if(data.code)
+                    if(data.code){
                         $('#success').text(`文件上传成功，收件码：${data.code}`),
                         $('#error').text('');
+                        $('#time').val(3);
+                        $('#duration').val(48);
+                        $('#password').val('');
+                        $('#file').val('');
+                    }
                     else
                         $('#error').text(data.error),
                         $('#success').text('');

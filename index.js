@@ -17,7 +17,8 @@ app.use(formidable());
 
 const {renderFile}=require('ejs');
 const Template=require('./src/lib/template.js');
-const { stringify } = require('querystring');
+const url=require('url');
+const querystring=require("querystring");
 
 var getClientIp=(req)=>{
     return req.headers['x-forwarded-for']||
@@ -111,6 +112,13 @@ app.get('/get/:id/:filename',(req,res)=>{
     if(downname.length>1)downname=`down.${downname[downname.length-1]}`;
     else downname="down";
     if(downname!=req.params.filename)return res.sendStatus(404);
+    if(detail.p&&Buffer.from(detail.p,'utf-8').toString('base64')!=querystring.parse(url.parse(req.url).query).p){
+        res.send(Template({title: `密码错误`,
+                           header: ``,
+                           startTime: req.body.startTime
+                          },`<p style="color: red;">密码错误</p>`));
+        return;
+    }
     detail.t--;
     var filelist=JSON.parse(readFileSync('data/file.json','utf8'));
     filelist[req.params.id]=detail;
@@ -129,6 +137,8 @@ app.post('/send',(req,res)=>{
     if(req.fields.password.length>64)return res.json({error: "密码长度不得超过 64 位。"});
     if(parseInt(Number(req.fields.time))<=0||parseInt(Number(req.fields.time))>10)
         return res.json({error: "下载次数应在 1～10 范围内。"});
+    if(Number(req.fields.duration)<=0||Number(req.fields.duration)>120)
+        return res.json({error: "失效时间必须为正数且不超过 5 天。"});
     var code="";
     for(var i=0;i<6;i++)
         code+="1234567890"[parseInt(Math.random()*10)];

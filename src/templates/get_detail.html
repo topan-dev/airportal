@@ -1,6 +1,10 @@
 <script>
     $(document).ready(()=>{
-        $('#confirm').click(()=>location.pathname=`/get/<%= code %>/<%= detail.downname %>`);
+        $('#confirm').click(()=>{
+            var needPassword=<%= detail.p?"true":"false" %>;
+            if(needPassword)location.href=`/get/<%= code %>/<%= detail.downname %>?p=${btoa($('#password').val())}`;
+            else location.pathname=`/get/<%= code %>/<%= detail.downname %>`;
+        });
     });
 </script>
 
