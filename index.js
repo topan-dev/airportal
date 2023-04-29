@@ -24,6 +24,24 @@ var getClientIp=(req)=>{
         req.socket.remoteAddress||
         req.connection.socket.remoteAddress||'';
 };
+Date.prototype.format = function(fmt) {
+    var o={
+       "M+": this.getMonth()+1,
+       "d+": this.getDate(),
+       "h+": this.getHours(),
+       "m+": this.getMinutes(),
+       "s+": this.getSeconds(),
+       "q+": Math.floor((this.getMonth()+3)/3),
+       "S" : this.getMilliseconds()
+    };
+    if(/(y+)/.test(fmt)){
+        fmt=fmt.replace(RegExp.$1,(this.getFullYear()+"").substr(4-RegExp.$1.length));
+    }
+    for(var k in o)
+        if(new RegExp(`(${k})`).test(fmt))
+            fmt=fmt.replace(RegExp.$1,(RegExp.$1.length==1)?(o[k]):(("00"+o[k]).substr((""+o[k]).length)));
+    return fmt;
+}
 
 if(!existsSync('data')){
     mkdirSync('data');
@@ -64,6 +82,8 @@ app.get('/get/:id/detail',(req,res)=>{
     if(downname.length>1)downname=`down.${downname[downname.length-1]}`;
     else downname="down";
     detail.downname=downname;
+    detail.d=new Date(detail.d).format("yyyy-MM-dd hh:mm:ss");
+    detail.u=new Date(detail.u).format("yyyy-MM-dd hh:mm:ss");
     renderFile("./src/templates/get_detail.html",{code: req.params.id, detail},(err,HTML)=>{
         res.send(Template({title: `文件信息`,
                            header: ``,
