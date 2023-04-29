@@ -1,6 +1,6 @@
 const express=require('express'),
       app=express();
-const {mkdirSync,existsSync,readFileSync,writeFileSync,unlinkSync}=require('fs');
+const {mkdirSync,existsSync,readFileSync,writeFileSync,unlinkSync, read}=require('fs');
 const path=require('path');
 const cors=require('cors');
 app.use(cors());
@@ -17,6 +17,7 @@ app.use(formidable());
 
 const {renderFile}=require('ejs');
 const Template=require('./src/lib/template.js');
+const { stringify } = require('querystring');
 
 var getClientIp=(req)=>{
     return req.headers['x-forwarded-for']||
@@ -42,6 +43,16 @@ Date.prototype.format = function(fmt) {
             fmt=fmt.replace(RegExp.$1,(RegExp.$1.length==1)?(o[k]):(("00"+o[k]).substr((""+o[k]).length)));
     return fmt;
 }
+var checkFile=(code,detail)=>{
+    if(detail.t==0||new Date().getTime()>detail.d){
+        var filelist=JSON.parse(readFileSync(`data/file.json`,'utf8'));
+        delete filelist[code];
+        writeFileSync('data/file.json',JSON.stringify(filelist,null,"  "));
+        unlinkSync(`data/files/${detail.f}`);
+        return false;
+    }
+    else return true;
+};
 
 if(!existsSync('data')){
     mkdirSync('data');
@@ -76,8 +87,9 @@ app.get('/get',(req,res)=>{
     });
 });
 app.get('/get/:id/detail',(req,res)=>{
-    var detail=JSON.parse(readFileSync('./data/file.json','utf8'))[req.params.id];
+    var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];
     if(!detail)return res.sendStatus(404);
+    if(!checkFile(req.params.id,detail))return res.sendStatus(404);
     var downname=detail.n.split(".");
     if(downname.length>1)downname=`down.${downname[downname.length-1]}`;
     else downname="down";
@@ -92,12 +104,17 @@ app.get('/get/:id/detail',(req,res)=>{
     });
 });
 app.get('/get/:id/:filename',(req,res)=>{
-    var detail=JSON.parse(readFileSync('./data/file.json','utf8'))[req.params.id];
+    var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];
     if(!detail)return res.sendStatus(404);
+    if(!checkFile(req.params.id,detail))return res.sendStatus(404);
     var downname=detail.n.split(".");
     if(downname.length>1)downname=`down.${downname[downname.length-1]}`;
     else downname="down";
     if(downname!=req.params.filename)return res.sendStatus(404);
+    detail.t--;
+    var filelist=JSON.parse(readFileSync('data/file.json','utf8'));
+    filelist[req.params.id]=detail;
+    writeFileSync('data/file.json',JSON.stringify(filelist,null,"  "));
     res.sendFile(`data/files/${detail.f}`,{root:__dirname},err=>{});
 });
 app.get('/send',(req,res)=>{
@@ -110,6 +127,8 @@ app.get('/send',(req,res)=>{
 });
 app.post('/send',(req,res)=>{
     if(req.fields.password.length>64)return res.json({error: "密码长度不得超过 64 位。"});
+    if(parseInt(Number(req.fields.time))<=0||parseInt(Number(req.fields.time))>10)
+        return res.json({error: "下载次数应在 1～10 范围内。"});
     var code="";
     for(var i=0;i<6;i++)
         code+="1234567890"[parseInt(Math.random()*10)];
@@ -121,7 +140,7 @@ app.post('/send',(req,res)=>{
     var now=new Date().getTime();
     filelist[code]={
         f: `${code}_${filename}`,
-        t: req.fields.time,
+        t: parseInt(Number(req.fields.time)),
         n: filename,
         ip: getClientIp(req),
         u: now,

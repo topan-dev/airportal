@@ -9,17 +9,20 @@
             var size=uploadfile.size/1024/1024;
             size=parseInt(size*100)/100;
             $('#file-size').text(`文件大小：${size} MiB`);
+            $('#success').text('');
         };
         updateFileSize();
         $("#file").change(updateFileSize);
         $("#confirm").click(()=>{
             if(!$("#file").val()){
                 $("#error").text('请选择文件。');
+                $('#success').text('');
                 return;
             }
             var uploadfile=$("#file")[0].files[0];
             if(uploadfile.size>=256*1024*1024){
                 $("#error").text('文件大小不得超过 256 MiB。');
+                $('#success').text('');
                 return;
             }
             var formdata=new FormData();
@@ -35,8 +38,12 @@
                 contentType: false,
                 processData: false,
                 success: data=>{
-                    if(data.code)$('#success').text(`文件上传成功，收件码：${data.code}`);
-                    else $('#error').text(data.error);
+                    if(data.code)
+                        $('#success').text(`文件上传成功，收件码：${data.code}`),
+                        $('#error').text('');
+                    else
+                        $('#error').text(data.error),
+                        $('#success').text('');
                 }
             });
         });
