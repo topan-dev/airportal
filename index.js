@@ -79,6 +79,26 @@ app.get('/',(req,res)=>{
                           },HTML));
     });
 });
+
+app.use("/file",express.static(path.join(__dirname,'src/assets')));
+app.get('/robots.txt',(req,res)=>{
+    res.sendFile("src/assets/robots.txt",{root:__dirname},(err)=>{});
+});
+
+app.get('/list',(req,res)=>{
+    var filelist=JSON.parse(readFileSync('data/file.json','utf8'));
+    var ip=getClientIp(req);
+    for(var key in filelist){
+        filelist[key].d=new Date(filelist[key].d).format("yyyy-MM-dd hh:mm:ss");
+    }
+    renderFile("./src/templates/list.html",{ip, filelist, isadmin: req.headers.host.startsWith('localhost')},(err,HTML)=>{
+        res.send(Template({title: `我的文件`,
+                           header: ``,
+                           startTime: req.body.startTime
+                          },HTML));
+    });
+});
+
 app.get('/get',(req,res)=>{
     renderFile("./src/templates/get.html",{},(err,HTML)=>{
         res.send(Template({title: `接收文件`,
@@ -125,6 +145,7 @@ app.get('/get/:id/:filename',(req,res)=>{
     writeFileSync('data/file.json',JSON.stringify(filelist,null,"  "));
     res.sendFile(`data/files/${detail.f}`,{root:__dirname},err=>{});
 });
+
 app.get('/send',(req,res)=>{
     renderFile("./src/templates/send.html",{ip: getClientIp(req)},(err,HTML)=>{
         res.send(Template({title: `发送文件`,
@@ -135,6 +156,7 @@ app.get('/send',(req,res)=>{
 });
 app.post('/send',(req,res)=>{
     if(req.fields.password.length>64)return res.json({error: "密码长度不得超过 64 位。"});
+    if(req.fields.note.length>100)return res.json({error: "备注长度不得超过 100。"});
     if(parseInt(Number(req.fields.time))<=0||parseInt(Number(req.fields.time))>10)
         return res.json({error: "下载次数应在 1～10 范围内。"});
     if(Number(req.fields.duration)<=0||Number(req.fields.duration)>120)
@@ -154,15 +176,14 @@ app.post('/send',(req,res)=>{
         n: filename,
         ip: getClientIp(req),
         u: now,
-        d: now+req.fields.duration*3600000
+        d: now+req.fields.duration*3600000,
+        nt: req.fields.note
     };
     if(req.fields.password.length>0)
         filelist[code].p=req.fields.password;
     writeFileSync(`data/file.json`,JSON.stringify(filelist,null,"  "));
     res.json({code});
 });
-
-app.use("/file",express.static(path.join(__dirname,'src/assets')));
 
 app.listen(8799,()=>{
     console.log('Port :8799 is opened');

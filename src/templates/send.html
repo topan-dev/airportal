@@ -3,6 +3,7 @@
         $('#time').val(3);
         $('#duration').val(48);
         $('#password').val('');
+        $('#note').val('');
         var updateFileSize=()=>{
             if(!$("#file").val())return;
             var uploadfile=$("#file")[0].files[0];
@@ -30,6 +31,7 @@
             formdata.append("time",$('#time').val());
             formdata.append("duration",$('#duration').val());
             formdata.append("password",$('#password').val());
+            formdata.append("note",$('#note').val());
             $.ajax({
                 url: "/send",
                 type: 'POST',
@@ -44,6 +46,7 @@
                         $('#time').val(3);
                         $('#duration').val(48);
                         $('#password').val('');
+                        $('#note').val('');
                         $('#file').val('');
                     }
                     else
@@ -58,6 +61,9 @@
 <style>
     input[type="text"]{
         width: 100px !important;
+    }
+    #note{
+        width: 400px !important;
     }
     input[type="password"]{
         width: 200px !important;
@@ -81,6 +87,10 @@
 <p>
     密码（不设置密码请留空）：
     <input id="password" type="password">
+</p>
+<p>
+    备注：
+    <input id="note" type="text">
 </p>
 <p>
     选择文件：

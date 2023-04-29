@@ -1,0 +1,69 @@
+<script>
+    var editFile=(key)=>location.pathname=`/get/${key}/edit`;
+    var deleteFile=(key)=>
+        $.post(
+            `/get/${key}/delete`,
+            {},
+            (data,status)=>{
+                location.href=`/list`;
+            }
+        );
+</script>
+
+<style>
+    table{
+        background: white;
+    }
+</style>
+
+<p><strong>我的文件</strong></p>
+<table>
+    <tr>
+        <th>收件码</th>
+        <th>剩余次数</th>
+        <th>失效时间</th>
+        <th>操作</th>
+        <th>备注</th>
+    </tr>
+    <% var total=0;
+    for(var key in filelist){
+        if(filelist[key].ip==ip){ %>
+            <tr>
+                <td><%= key %></td>
+                <td><%= filelist[key].t %></td>
+                <td><%= filelist[key].d %></td>
+                <td><a href="javascript: editFile('<%= key %>')">编辑</a> <a href="javascript: deleteFile('<%= key %>')">删除</a></td>
+                <td><%= filelist[key].nt %></td>
+            </tr>
+     <% }
+        total++;
+    }
+    if(total==0){ %>
+        <tr>
+            <td colspan="5">暂无发件信息，快去<a href="/send">发件</a>吧！</td>
+        </tr>
+    <% } %>
+</table>
+<% if(isadmin){ %>
+    <p><strong>所有文件</strong></p>
+    <table>
+        <tr>
+            <th>收件码</th>
+            <th>上传 Ip</th>
+            <th>剩余次数</th>
+            <th>失效时间</th>
+            <th>操作</th>
+            <th>备注</th>
+        </tr>
+        <% for(var key in filelist){ %>
+            <tr>
+                <td><%= key %></td>
+                <td><%= filelist[key].ip %></td>
+                <td><%= filelist[key].t %></td>
+                <td><%= filelist[key].d %></td>
+                <td><a href="javascript: editFile('<%= key %>')">编辑</a> <a href="javascript: deleteFile('<%= key %>')">删除</a></td>
+                <td><%= filelist[key].nt %></td>
+            </tr>
+        <% } %>
+    </table>
+<% } %>
