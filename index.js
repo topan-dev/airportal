@@ -58,8 +58,8 @@ var checkFile=(code,detail)=>{
 if(!existsSync('data')){
     mkdirSync('data');
     mkdirSync('data/files');
-    writeFileSync('data/user.json',JSON.stringify([],null,"  "));
-    writeFileSync('data/file.json',JSON.stringify([],null,"  "));
+    writeFileSync('data/user.json',JSON.stringify({},null,"  "));
+    writeFileSync('data/file.json',JSON.stringify({},null,"  "));
 }
 
 app.all('*',(req,res,next)=>{
@@ -123,6 +123,17 @@ app.get('/get/:id/detail',(req,res)=>{
                            startTime: req.body.startTime
                           },HTML));
     });
+});
+app.post('/get/:id/delete',(req,res)=>{
+    var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];
+    if(!detail)return res.json({});
+    if(!checkFile(req.params.id,detail))return res.json({});
+    if(getClientIp(req)!=detail.ip&&!req.headers.host.startsWith('localhost'))return res.json({});
+    var filelist=JSON.parse(readFileSync(`data/file.json`,'utf8'));
+    delete filelist[req.params.id];
+    writeFileSync('data/file.json',JSON.stringify(filelist,null,"  "));
+    unlinkSync(`data/files/${detail.f}`);
+    res.json({});
 });
 app.get('/get/:id/:filename',(req,res)=>{
     var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];

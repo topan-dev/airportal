@@ -1,6 +1,6 @@
 <script>
     var editFile=(key)=>location.pathname=`/get/${key}/edit`;
-    var deleteFile=(key)=>
+    var deleteFile=(key)=>{
         $.post(
             `/get/${key}/delete`,
             {},
@@ -8,6 +8,7 @@
                 location.href=`/list`;
             }
         );
+    }
 </script>
 
 <style>
@@ -27,7 +28,8 @@
     </tr>
     <% var total=0;
     for(var key in filelist){
-        if(filelist[key].ip==ip){ %>
+        if(filelist[key].ip==ip){
+            total++; %>
             <tr>
                 <td><%= key %></td>
                 <td><%= filelist[key].t %></td>
@@ -36,7 +38,6 @@
                 <td><%= filelist[key].nt %></td>
             </tr>
      <% }
-        total++;
     }
     if(total==0){ %>
         <tr>
