@@ -18,9 +18,11 @@
 </style>
 
 <p><strong>我的文件</strong></p>
+<p>已用空间：<%= parseInt(usedSpace*1000)/1000 %> MiB&nbsp;&nbsp;&nbsp;剩余空间：<%= parseInt(freeSpace*1000)/1000 %> MiB</p>
 <table>
     <tr>
         <th>收件码</th>
+        <th>文件大小</th>
         <th>剩余次数</th>
         <th>失效时间</th>
         <th>操作</th>
@@ -32,6 +34,7 @@
             total++; %>
             <tr>
                 <td><%= key %></td>
+                <td><%= parseInt(filelist[key].s/1024/1024*1000)/1000 %> MiB</td>
                 <td><%= filelist[key].t %></td>
                 <td><%= filelist[key].d %></td>
                 <td><a href="javascript: editFile('<%= key %>')">编辑</a> <a href="javascript: deleteFile('<%= key %>')">删除</a></td>
@@ -41,15 +44,17 @@
     }
     if(total==0){ %>
         <tr>
-            <td colspan="5">暂无发件信息，快去<a href="/send">发件</a>吧！</td>
+            <td colspan="6">暂无发件信息，快去<a href="/send">发件</a>吧！</td>
         </tr>
     <% } %>
 </table>
 <% if(isadmin){ %>
     <p><strong>所有文件</strong></p>
+    <p>已用空间：<%= parseInt(usedSpaceSum*1000)/1000 %> MiB&nbsp;&nbsp;&nbsp;剩余空间：<%= parseInt(freeSpaceSum*1000)/1000 %> MiB</p>
     <table>
         <tr>
             <th>收件码</th>
+            <th>文件大小</th>
             <th>上传 Ip</th>
             <th>剩余次数</th>
             <th>失效时间</th>
@@ -59,6 +64,7 @@
         <% for(var key in filelist){ %>
             <tr>
                 <td><%= key %></td>
+                <td><%= parseInt(filelist[key].s/1024/1024*1000)/1000 %> MiB</td>
                 <td><%= filelist[key].ip %></td>
                 <td><%= filelist[key].t %></td>
                 <td><%= filelist[key].d %></td>

@@ -1,6 +1,6 @@
 const express=require('express'),
       app=express();
-const {mkdirSync,existsSync,readFileSync,writeFileSync,unlinkSync, read}=require('fs');
+const {mkdirSync,existsSync,readFileSync,writeFileSync,unlinkSync,statSync}=require('fs');
 const path=require('path');
 const cors=require('cors');
 app.use(cors());
@@ -9,7 +9,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:false}));
 const cookieParser=require('cookie-parser');
 app.use(cookieParser());
-const fileSizeLimit=512;
+const fileSizeLimit=256,sumSizeLimit=512,serverSumSizeLimit=1024*5;
 var multer=require('multer');
 var uploader=multer({dest: "upload", limits: {fileSize: fileSizeLimit*1024*1024}});
 const formidable=require('express-formidable');
@@ -26,7 +26,37 @@ var getClientIp=(req)=>{
         req.socket.remoteAddress||
         req.connection.socket.remoteAddress||'';
 };
-Date.prototype.format = function(fmt) {
+var getUsedSpace=(ip)=>{
+    var filelist=JSON.parse(readFileSync(`data/file.json`,'utf8'));
+    var sum=0;
+    for(var key in filelist)
+        if(filelist[key].ip==ip)
+            sum+=filelist[key].s;
+    return sum/1024/1024;
+}
+var getFreeSpace=(ip)=>{
+    var filelist=JSON.parse(readFileSync(`data/file.json`,'utf8'));
+    var IpTotal=0,SumTotal=0;
+    for(var key in filelist){
+        if(filelist[key].ip==ip)
+            IpTotal+=filelist[key].s;
+        SumTotal+=filelist[key].s;
+    }
+    return Math.min(serverSumSizeLimit-SumTotal/1024/1024,sumSizeLimit-IpTotal/1024/1024);
+}
+var getSumUsedSpace=()=>{
+    var filelist=JSON.parse(readFileSync(`data/file.json`,'utf8'));
+    var sum=0;
+    for(var key in filelist)sum+=filelist[key].s;
+    return sum/1024/1024;
+}
+var getSumFreeSpace=()=>{
+    var filelist=JSON.parse(readFileSync(`data/file.json`,'utf8'));
+    var sum=0;
+    for(var key in filelist)sum+=filelist[key].s;
+    return serverSumSizeLimit-sum/1024/1024;
+}
+Date.prototype.format=function(fmt){
     var o={
        "M+": this.getMonth()+1,
        "d+": this.getDate(),
@@ -36,9 +66,8 @@ Date.prototype.format = function(fmt) {
        "q+": Math.floor((this.getMonth()+3)/3),
        "S" : this.getMilliseconds()
     };
-    if(/(y+)/.test(fmt)){
+    if(/(y+)/.test(fmt))
         fmt=fmt.replace(RegExp.$1,(this.getFullYear()+"").substr(4-RegExp.$1.length));
-    }
     for(var k in o)
         if(new RegExp(`(${k})`).test(fmt))
             fmt=fmt.replace(RegExp.$1,(RegExp.$1.length==1)?(o[k]):(("00"+o[k]).substr((""+o[k]).length)));
@@ -58,7 +87,6 @@ var checkFile=(code,detail)=>{
 if(!existsSync('data')){
     mkdirSync('data');
     mkdirSync('data/files');
-    writeFileSync('data/user.json',JSON.stringify({},null,"  "));
     writeFileSync('data/file.json',JSON.stringify({},null,"  "));
 }
 
@@ -88,10 +116,18 @@ app.get('/robots.txt',(req,res)=>{
 app.get('/list',(req,res)=>{
     var filelist=JSON.parse(readFileSync('data/file.json','utf8'));
     var ip=getClientIp(req);
-    for(var key in filelist){
+    for(var key in filelist)
         filelist[key].d=new Date(filelist[key].d).format("yyyy-MM-dd hh:mm:ss");
-    }
-    renderFile("./src/templates/list.html",{ip, filelist, isadmin: req.headers.host.startsWith('localhost')},(err,HTML)=>{
+    renderFile("./src/templates/list.html",
+        {
+            ip, filelist,
+            isadmin: req.headers.host.startsWith('localhost'),
+            usedSpace: getUsedSpace(getClientIp(req)),
+            freeSpace: getFreeSpace(getClientIp(req)),
+            usedSpaceSum: getSumUsedSpace(),
+            freeSpaceSum: getSumFreeSpace()
+        },
+    (err,HTML)=>{
         res.send(Template({title: `我的文件`,
                            header: ``,
                            startTime: req.body.startTime
@@ -166,6 +202,9 @@ app.get('/send',(req,res)=>{
     });
 });
 app.post('/send',(req,res)=>{
+    if(req.files.file.size/1024/1024>getFreeSpace(getClientIp(req))
+        ||req.files.file.size>fileSizeLimit*1024*1024)
+        return res.json({error: "文件超出剩余空间或文件大小超出 256 MiB。"});
     if(req.fields.password.length>64)return res.json({error: "密码长度不得超过 64 位。"});
     if(req.fields.note.length>100)return res.json({error: "备注长度不得超过 100。"});
     if(parseInt(Number(req.fields.time))<=0||parseInt(Number(req.fields.time))>10)
@@ -188,7 +227,8 @@ app.post('/send',(req,res)=>{
         ip: getClientIp(req),
         u: now,
         d: now+req.fields.duration*3600000,
-        nt: req.fields.note
+        nt: req.fields.note,
+        s: statSync(`data/files/${code}_${filename}`).size
     };
     if(req.fields.password.length>0)
         filelist[code].p=req.fields.password;

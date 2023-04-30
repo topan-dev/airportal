@@ -17,6 +17,7 @@
 <p><strong>文件信息</strong></p>
 <p>收件码：<%= code %></p>
 <p>文件名：<%= detail.n %></p>
+<p>文件大小：<%= parseInt(detail.s/1024/1024*100)/100 %> MiB</p>
 <p>剩余下载次数：<%= detail.t %></p>
 <p>上传者 Ip：<%= detail.ip %></p>
 <p>上传时间：<%= detail.u %></p>
