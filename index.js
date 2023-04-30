@@ -83,6 +83,8 @@ var checkFile=(code,detail)=>{
     }
     else return true;
 };
+var checkAdmin=req=>req.headers.host.startsWith('localhost');
+// ||req.cookies['airportal-cookie']==""
 
 if(!existsSync('data')){
     mkdirSync('data');
@@ -121,7 +123,7 @@ app.get('/list',(req,res)=>{
     renderFile("./src/templates/list.html",
         {
             ip, filelist,
-            isadmin: req.headers.host.startsWith('localhost'),
+            isadmin: checkAdmin(req),
             usedSpace: getUsedSpace(getClientIp(req)),
             freeSpace: getFreeSpace(getClientIp(req)),
             usedSpaceSum: getSumUsedSpace(),
@@ -164,7 +166,7 @@ app.post('/get/:id/delete',(req,res)=>{
     var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];
     if(!detail)return res.json({});
     if(!checkFile(req.params.id,detail))return res.json({});
-    if(getClientIp(req)!=detail.ip&&!req.headers.host.startsWith('localhost'))return res.json({});
+    if(getClientIp(req)!=detail.ip&&!checkAdmin(req))return res.json({});
     var filelist=JSON.parse(readFileSync(`data/file.json`,'utf8'));
     delete filelist[req.params.id];
     writeFileSync('data/file.json',JSON.stringify(filelist,null,"  "));
