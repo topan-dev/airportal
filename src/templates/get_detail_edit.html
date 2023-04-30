@@ -1,0 +1,81 @@
+<script>
+    $(document).ready(()=>{
+        $('#oldpassword').val("");
+        $('#newpassword').val("");
+        $('#error').text("");
+        $('#confirm').click(()=>{
+            var formdata=new FormData();
+            formdata.append("time",$('#time').val());
+            formdata.append("duration",$('#duration').val());
+            formdata.append("oldpassword",$('#oldpassword').val());
+            formdata.append("newpassword",$('#newpassword').val());
+            formdata.append("note",$('#note').val());
+            $.ajax({
+                url: `/get/<%= code %>/edit`,
+                type: 'POST',
+                data: formdata,
+                cache: false,
+                contentType: false,
+                processData: false,
+                success: data=>{
+                    if(data.error)$('#error').text(data.error);
+                    else location.href=`/get/<%= code %>/detail`;
+                }
+            });
+        });
+        $('#delete').click(()=>{
+            $.post(
+                `/get/<%= code %>/delete`,
+                {},
+                (data,status)=>{
+                    location.href=`/list`;
+                }
+            );
+        });
+        $('#back').click(()=>location.href=`/get/<%= code %>/detail`);
+    });
+</script>
+
+<style>
+    input[type="text"]{
+        width: 100px !important;
+    }
+    #note{
+        width: 400px !important;
+    }
+    input[type="password"]{
+        width: 200px !important;
+    }
+    #error{
+        color: red;
+    }
+    #success{
+        color: green;
+    }
+</style>
+
+<p><strong>编辑信息</strong></p>
+<p>
+    下载次数：
+    <input id="time" type="text" value="<%= detail.t %>">
+    &nbsp;&nbsp;&nbsp;生效时间（小时）：
+    <input id="duration" type="text" value="<%= (detail.d-detail.u)/3600000 %>">
+</p>
+<p>
+    原密码（若未设置密码请留空）：
+    <input id="oldpassword" type="password">
+</p>
+<p>
+    新密码（若去除原密码请留空）：
+    <input id="newpassword" type="password">
+</p>
+<p>
+    备注：
+    <input id="note" type="text" value="<%= detail.nt %>">
+</p>
+<p>
+    <button id="confirm" class="topan-button-emphasize topan-button-default">确认修改</button>
+    <button id="back" class="topan-button-commonly topan-button-default">返回详情页</button>
+    <button id="delete" class="topan-button-commonly topan-button-default">删除文件</button>
+</p>
+<p id="error"></p>

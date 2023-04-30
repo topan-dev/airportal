@@ -1,4 +1,5 @@
 <script>
+    var fileDetail=(key)=>location.pathname=`/get/${key}/detail`;
     var editFile=(key)=>location.pathname=`/get/${key}/edit`;
     var deleteFile=(key)=>{
         $.post(
@@ -37,7 +38,7 @@
                 <td><%= parseInt(filelist[key].s/1024/1024*1000)/1000 %> MiB</td>
                 <td><%= filelist[key].t %></td>
                 <td><%= filelist[key].d %></td>
-                <td><a href="javascript: editFile('<%= key %>')">编辑</a> <a href="javascript: deleteFile('<%= key %>')">删除</a></td>
+                <td><a href="javascript: fileDetail('<%= key %>')">详情</a> <a href="javascript: editFile('<%= key %>')">编辑</a> <a href="javascript: deleteFile('<%= key %>')">删除</a></td>
                 <td><%= filelist[key].nt %></td>
             </tr>
      <% }
@@ -68,7 +69,7 @@
                 <td><%= filelist[key].ip %></td>
                 <td><%= filelist[key].t %></td>
                 <td><%= filelist[key].d %></td>
-                <td><a href="javascript: editFile('<%= key %>')">编辑</a> <a href="javascript: deleteFile('<%= key %>')">删除</a></td>
+                <td><a href="javascript: fileDetail('<%= key %>')">详情</a> <a href="javascript: editFile('<%= key %>')">编辑</a> <a href="javascript: deleteFile('<%= key %>')">删除</a></td>
                 <td><%= filelist[key].nt %></td>
             </tr>
         <% } %>

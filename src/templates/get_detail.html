@@ -5,6 +5,16 @@
             if(needPassword)location.href=`/get/<%= code %>/<%= detail.downname %>?p=${btoa($('#password').val())}`;
             else location.pathname=`/get/<%= code %>/<%= detail.downname %>`;
         });
+        $('#edit').click(()=>location.href=`/get/<%= code %>/edit`);
+        $('#delete').click(()=>{
+            $.post(
+                `/get/<%= code %>/delete`,
+                {},
+                (data,status)=>{
+                    location.href=`/list`;
+                }
+            );
+        });
     });
 </script>
 
@@ -33,4 +43,8 @@
 <% } %>
 <p>
     <button id="confirm" class="topan-button-emphasize topan-button-default">确认下载</button>
+    <% if(isowner){ %>
+        <button id="edit" class="topan-button-commonly topan-button-default">编辑信息</button>
+        <button id="delete" class="topan-button-commonly topan-button-default">删除文件</button>
+    <% } %>
 </p>

@@ -10,8 +10,6 @@ app.use(bodyParser.urlencoded({extended:false}));
 const cookieParser=require('cookie-parser');
 app.use(cookieParser());
 const fileSizeLimit=256,sumSizeLimit=512,serverSumSizeLimit=1024*5;
-var multer=require('multer');
-var uploader=multer({dest: "upload", limits: {fileSize: fileSizeLimit*1024*1024}});
 const formidable=require('express-formidable');
 app.use(formidable());
 
@@ -155,12 +153,45 @@ app.get('/get/:id/detail',(req,res)=>{
     detail.downname=downname;
     detail.d=new Date(detail.d).format("yyyy-MM-dd hh:mm:ss");
     detail.u=new Date(detail.u).format("yyyy-MM-dd hh:mm:ss");
-    renderFile("./src/templates/get_detail.html",{code: req.params.id, detail},(err,HTML)=>{
+    var isowner=getClientIp(req)==detail.ip||checkAdmin(req)
+    renderFile("./src/templates/get_detail.html",{code: req.params.id, detail, isowner},(err,HTML)=>{
         res.send(Template({title: `文件信息`,
                            header: ``,
                            startTime: req.body.startTime
                           },HTML));
     });
+});
+app.get('/get/:id/edit',(req,res)=>{
+    var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];
+    if(!detail)return res.sendStatus(404);
+    if(!checkFile(req.params.id,detail))return res.sendStatus(404);
+    if(getClientIp(req)!=detail.ip&&!checkAdmin(req))return res.sendStatus(404);
+    renderFile("./src/templates/get_detail_edit.html",{code: req.params.id, detail},(err,HTML)=>{
+        res.send(Template({title: `编辑信息`,
+                           header: ``,
+                           startTime: req.body.startTime
+                          },HTML));
+    });
+});
+app.post('/get/:id/edit',(req,res)=>{
+    var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];
+    if(!detail)return res.json({error: '文件不存在或已被删除（或失效）。'});
+    if(!checkFile(req.params.id,detail))return res.json({error: '文件不存在或已被删除（或失效）。'});
+    if(getClientIp(req)!=detail.ip&&!checkAdmin(req))return res.json({error: '无权限。'});
+    if(detail.p&&req.fields.oldpassword!=detail.p)return res.json({error: '原密码错误。'});
+    if(req.fields.newpassword.length>64)return res.json({error: "密码长度不得超过 64 位。"});
+    if(req.fields.note.length>100)return res.json({error: "备注长度不得超过 100。"});
+    if(parseInt(Number(req.fields.time))<=0||parseInt(Number(req.fields.time))>10)
+        return res.json({error: "下载次数应在 1～10 范围内。"});
+    if(Number(req.fields.duration)<=0||Number(req.fields.duration)>120)
+        return res.json({error: "失效时间必须为正数且不超过 5 天。"});
+    detail.p=req.fields.newpassword;
+    detail.d=detail.u+Number(req.fields.duration)*3600000;
+    detail.nt=req.fields.note,detail.t=parseInt(Number(req.fields.time));
+    var filelist=JSON.parse(readFileSync('data/file.json','utf8'));
+    filelist[req.params.id]=detail;
+    writeFileSync('data/file.json',JSON.stringify(filelist,null,"  "));
+    res.json({});
 });
 app.post('/get/:id/delete',(req,res)=>{
     var detail=JSON.parse(readFileSync('data/file.json','utf8'))[req.params.id];
