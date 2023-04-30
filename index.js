@@ -1,6 +1,6 @@
 const express=require('express'),
       app=express();
-const {mkdirSync,existsSync,readFileSync,writeFileSync,unlinkSync,statSync, fstat}=require('fs');
+const {mkdirSync,existsSync,readFileSync,writeFileSync,unlinkSync,statSync}=require('fs');
 const path=require('path');
 const cors=require('cors');
 app.use(cors());
@@ -82,7 +82,7 @@ var checkFile=(code,detail)=>{
     else return true;
 };
 var checkAdmin=req=>req.headers.host.startsWith('localhost')
-    ||(existsSync('data/admin')&&readFileSync('data/admin','utf8')==req.cookies['airportal-cookie']);
+    ||(existsSync('data/admin.json')&&JSON.parse(readFileSync('data/admin.json','utf8'))==req.cookies['airportal-cookie']);
 
 if(!existsSync('data')){
     mkdirSync('data');
